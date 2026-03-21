@@ -1,0 +1,117 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: farpost_test_backend_26 API
+            version: '1.0'
+        paths:
+            /api/machines:
+                post:
+                    summary: Создать машину
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    required: [totalMemory, totalCpu]
+                                    properties:
+                                        totalMemory:
+                                            type: integer
+                                            minimum: 1
+                                            example: 8192
+                                        totalCpu:
+                                            type: integer
+                                            minimum: 1
+                                            example: 8
+                                example:
+                                    totalMemory: 8192
+                                    totalCpu: 8
+                    responses:
+                        '201': { description: Created }
+                        '400': { description: Bad request }
+            /api/machines/{id}:
+                get:
+                    summary: Конкретная машина
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          schema: { type: integer, example: 1 }
+                    responses:
+                        '200': { description: OK }
+                        '404': { description: Not found }
+                delete:
+                    summary: Удалить машину
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          schema: { type: integer, example: 1 }
+                    responses:
+                        '200': { description: OK }
+                        '404': { description: Not found }
+            /api/processes:
+                get:
+                    summary: Все процессы
+                    responses:
+                        '200': { description: OK }
+                post:
+                    summary: Создать процесс
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    required: [requiredMemory, requiredCpu]
+                                    properties:
+                                        requiredMemory:
+                                            type: integer
+                                            minimum: 1
+                                            example: 1024
+                                        requiredCpu:
+                                            type: integer
+                                            minimum: 1
+                                            example: 1
+                                example:
+                                    requiredMemory: 1024
+                                    requiredCpu: 1
+                    responses:
+                        '201': { description: Created }
+                        '400': { description: Bad request }
+            /api/processes/unallocated:
+                get:
+                    summary: Нераспределенные процессы (очередь)
+                    responses:
+                        '200': { description: OK }
+            /api/processes/{id}:
+                delete:
+                    summary: Удалить процесс
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          schema: { type: integer, example: 1 }
+                    responses:
+                        '200': { description: OK }
+                        '404': { description: Not found }
+            /api/status:
+                get:
+                    summary: Текущее состояние сервиса
+                    responses:
+                        '200': { description: OK }
+            /api/status/machines:
+                get:
+                    summary: Все машины
+                    responses:
+                        '200': { description: OK }
+            /api/status/processes:
+                get:
+                    summary: Все процессы
+                    responses:
+                        '200': { description: OK }
+    areas:
+        default:
+            path_patterns:
+                - ^/api(?!/doc)
+            disable_default_routes: true
