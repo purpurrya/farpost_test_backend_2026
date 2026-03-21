@@ -6,7 +6,7 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_DEBUG: ${APP_DEBUG:-1}
-      DATABASE_URL: mysql://${MYSQL_USER:-app}:${MYSQL_PASSWORD:-f5rp0s1h111!}@database:3306/${MYSQL_DATABASE:-fartest26}?serverVersion=8.0.32&charset=utf8mb4
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@database:3306/${MYSQL_DATABASE}?serverVersion=8.0.32&charset=utf8mb4
     volumes:
       - ./:/var/www/html
     depends_on:
@@ -27,12 +27,12 @@ services:
   database:
     image: mysql:${MYSQL_VERSION:-8.0}
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-fartest26}
-      MYSQL_USER: ${MYSQL_USER:-app}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-f5rp0s1h111!}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-!ChangeMeRoot!}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-!ChangeMeRoot!}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       timeout: 5s
       retries: 5
       start_period: 60s

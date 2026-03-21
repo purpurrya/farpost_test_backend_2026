@@ -2,88 +2,218 @@ nelmio_api_doc:
     documentation:
         info:
             title: farpost_test_backend_26 API
-            version: '1.0'
+            description: |
+                REST API для учёта машин и процессов, распределения по RAM/CPU и ребалансировки
+        components:
+            schemas:
+                ErrorBody:
+                    type: object
+                    properties:
+                        success: { type: boolean, example: false }
+                        error: { type: string, description: сообщение об ошибке }
+                MachineSummary:
+                    type: object
+                    properties:
+                        id: { type: integer }
+                        totalMemory: { type: integer }
+                        totalCpu: { type: integer }
+                ProcessWithPlacement:
+                    type: object
+                    properties:
+                        id: { type: integer }
+                        requiredMemory: { type: integer }
+                        requiredCpu: { type: integer }
+                        machine:
+                            description: null, если процесс не размещён на машине
+                            nullable: true
+                            allOf:
+                                - $ref: '#/components/schemas/MachineSummary'
+                CreateMachineBody:
+                    type: object
+                    required: [totalMemory, totalCpu]
+                    properties:
+                        totalMemory:
+                            type: integer
+                            minimum: 1
+                            description: RAM (целое > 0)
+                            example: 8192
+                        totalCpu:
+                            type: integer
+                            minimum: 1
+                            description: CPU (целое > 0)
+                            example: 8
+                CreateProcessBody:
+                    type: object
+                    required: [requiredMemory, requiredCpu]
+                    properties:
+                        requiredMemory:
+                            type: integer
+                            minimum: 1
+                            example: 1024
+                        requiredCpu:
+                            type: integer
+                            minimum: 1
+                            example: 1
         paths:
             /api/machines:
                 post:
                     summary: Создать машину
+                    description: |
+                        Создает машину с заданными ресурсами и ребалансит (+пробует разместить нераспределенные процессы)
                     requestBody:
                         required: true
                         content:
                             application/json:
                                 schema:
-                                    type: object
-                                    required: [totalMemory, totalCpu]
-                                    properties:
-                                        totalMemory:
-                                            type: integer
-                                            minimum: 1
-                                            example: 8192
-                                        totalCpu:
-                                            type: integer
-                                            minimum: 1
-                                            example: 8
+                                    $ref: '#/components/schemas/CreateMachineBody'
                                 example:
                                     totalMemory: 8192
                                     totalCpu: 8
                     responses:
-                        '201': { description: Created }
-                        '400': { description: Bad request }
+                        '201':
+                            description: Машина создана
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            success: { type: boolean, example: true }
+                                            machine:
+                                                $ref: '#/components/schemas/MachineSummary'
+                        '400':
+                            description: Невалидное тело или ошибка
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/ErrorBody'
             /api/machines/{id}:
                 get:
-                    summary: Конкретная машина
+                    summary: Машина с ее нагрузкой и процессами
+                    description: Возвращает ресурсы машины, занятость и список размещённых на ней процессов
                     parameters:
                         - name: id
                           in: path
                           required: true
                           schema: { type: integer, example: 1 }
                     responses:
-                        '200': { description: OK }
-                        '404': { description: Not found }
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            id: { type: integer }
+                                            totalMemory: { type: integer }
+                                            totalCpu: { type: integer }
+                                            processNum: { type: integer }
+                                            usedMemory: { type: integer }
+                                            usedCpu: { type: integer }
+                                            freeMemory: { type: integer }
+                                            freeCpu: { type: integer }
+                                            processes:
+                                                type: array
+                                                items:
+                                                    type: object
+                                                    properties:
+                                                        id: { type: integer }
+                                                        requiredMemory: { type: integer }
+                                                        requiredCpu: { type: integer }
+                        '404':
+                            description: Машина не найдена
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/ErrorBody'
                 delete:
                     summary: Удалить машину
+                    description: Удаляет машину. процессы с неё ребалансятся
                     parameters:
                         - name: id
                           in: path
                           required: true
                           schema: { type: integer, example: 1 }
                     responses:
-                        '200': { description: OK }
-                        '404': { description: Not found }
+                        '200':
+                            description: Удалено
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            success: { type: boolean, example: true }
+                                            message: { type: string }
+                        '404':
+                            description: Машина не найдена
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/ErrorBody'
             /api/processes:
                 get:
-                    summary: Все процессы
+                    summary: Список всех процессов
+                    description: 'Каждый элемент содержит привязку к машине или machine=null, если процесс не размещён.'
                     responses:
-                        '200': { description: OK }
+                        '200':
+                            description: Массив процессов
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/ProcessWithPlacement'
                 post:
                     summary: Создать процесс
+                    description: |
+                        Создаёт процесс. Если есть подходящая машина — сразу размещается,
+                        иначе остаётся в очереди до ребаланса
                     requestBody:
                         required: true
                         content:
                             application/json:
                                 schema:
-                                    type: object
-                                    required: [requiredMemory, requiredCpu]
-                                    properties:
-                                        requiredMemory:
-                                            type: integer
-                                            minimum: 1
-                                            example: 1024
-                                        requiredCpu:
-                                            type: integer
-                                            minimum: 1
-                                            example: 1
+                                    $ref: '#/components/schemas/CreateProcessBody'
                                 example:
                                     requiredMemory: 1024
                                     requiredCpu: 1
                     responses:
-                        '201': { description: Created }
-                        '400': { description: Bad request }
+                        '201':
+                            description: Процесс создан
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            success: { type: boolean, example: true }
+                                            process:
+                                                $ref: '#/components/schemas/ProcessWithPlacement'
+                        '400':
+                            description: Невалидное тело или ошибка
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/ErrorBody'
             /api/processes/unallocated:
                 get:
-                    summary: Нераспределенные процессы (очередь)
+                    summary: Нераспределенные процессы
+                    description: Процессы без назначенной машины 
                     responses:
-                        '200': { description: OK }
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            count: { type: integer }
+                                            processes:
+                                                type: array
+                                                items:
+                                                    type: object
+                                                    properties:
+                                                        id: { type: integer }
+                                                        requiredMemory: { type: integer }
+                                                        requiredCpu: { type: integer }
             /api/processes/{id}:
                 delete:
                     summary: Удалить процесс
@@ -93,23 +223,110 @@ nelmio_api_doc:
                           required: true
                           schema: { type: integer, example: 1 }
                     responses:
-                        '200': { description: OK }
-                        '404': { description: Not found }
+                        '200':
+                            description: Удалено
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            success: { type: boolean, example: true }
+                                            message: { type: string }
+                        '404':
+                            description: Процесс не найден
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/ErrorBody'
             /api/status:
                 get:
-                    summary: Текущее состояние сервиса
+                    summary: Состояние сервиса
+                    description: Статистика, нагрузка по машинам и очередь 
                     responses:
-                        '200': { description: OK }
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            summary:
+                                                type: object
+                                                properties:
+                                                    total_machines: { type: integer }
+                                                    total_processes: { type: integer }
+                                                    unallocated_processes: { type: integer }
+                                                    waiting_queue_count: { type: integer }
+                                            machines:
+                                                type: array
+                                                items:
+                                                    type: object
+                                                    properties:
+                                                        machine_id: { type: integer }
+                                                        process_num: { type: integer }
+                                                        memory_used: { type: integer }
+                                                        memory_total: { type: integer }
+                                                        memory_percent: { type: number }
+                                                        cpu_used: { type: integer }
+                                                        cpu_total: { type: integer }
+                                                        cpu_percent: { type: number }
+                                            waiting_queue:
+                                                type: array
+                                                items:
+                                                    type: object
+                                                    properties:
+                                                        id: { type: integer }
+                                                        requiredMemory: { type: integer }
+                                                        requiredCpu: { type: integer }
             /api/status/machines:
                 get:
-                    summary: Все машины
+                    summary: Машины с метриками
+                    description: Список машин с занятостью и долей использования RAM/CPU в процентах (`memoryOccup`, `cpuOccup`).
                     responses:
-                        '200': { description: OK }
+                        '200':
+                            description: Массив записей по машинам
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            type: object
+                                            properties:
+                                                id: { type: integer }
+                                                totalMemory: { type: integer }
+                                                totalCpu: { type: integer }
+                                                processNum: { type: integer }
+                                                usedMemory: { type: integer }
+                                                usedCpu: { type: integer }
+                                                freeMemory: { type: integer }
+                                                freeCpu: { type: integer }
+                                                memoryOccup: { type: number }
+                                                cpuOccup: { type: number }
             /api/status/processes:
                 get:
-                    summary: Все процессы
+                    summary: Процессы и размещение
+                    description: Размещенные процессы и данные машины 
                     responses:
-                        '200': { description: OK }
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            type: object
+                                            properties:
+                                                id: { type: integer }
+                                                requiredMemory: { type: integer }
+                                                requiredCpu: { type: integer }
+                                                allocated: { type: boolean }
+                                                machine:
+                                                    nullable: true
+                                                    allOf:
+                                                        - $ref: '#/components/schemas/MachineSummary'
+    html_config:
+        swagger_ui_config:
+            defaultModelsExpandDepth: -1
     areas:
         default:
             path_patterns:

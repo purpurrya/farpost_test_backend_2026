@@ -13,7 +13,6 @@
 
 ### Развёртывание
 
-
 ```bash
 docker compose up -d --build
 ```
@@ -26,11 +25,11 @@ API: **http://127.0.0.1:8080**
 docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-Параметры MySQL по умолчанию: база `fartest26`, пользователь `app`, пароль **`f5rp0s1h111!`** 
+**Swagger:** 
+UI — `/api/doc`, 
+JSON — `/api/doc.json`
 
-**Swagger:** UI — `/api/doc`, JSON — `/api/doc.json`.
-
-Тесты:
+Тесты: в **`phpunit.dist.xml`** задан `DATABASE_URL` для окружения с Docker; пароль root должен совпадать с **`MYSQL_ROOT_PASSWORD`** в вашем `.env`.
 
 ```bash
 docker compose exec app php vendor/bin/phpunit
