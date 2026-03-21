@@ -2,12 +2,14 @@
 
 namespace App\Controller;
 
-use App\Service\MachineManager;
+use App\Dto\CreateMachineDto;
 use App\Service\AllocationService;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use App\Service\MachineManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/machines', name: 'api_machines_')]
 class MachineController extends AbstractController
@@ -18,29 +20,12 @@ class MachineController extends AbstractController
     ) {}
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-
-        if (!is_array($data)) {
-            return $this->json([
-                'success' => false,
-                'error' => 'Invalid request data'
-            ], 400);
-        }
-
-        $totalMemory = $data['totalMemory'] ?? null;
-        $totalCpu = $data['totalCpu'] ?? null;
-
-        if (!is_int($totalMemory) || $totalMemory <= 0 || !is_int($totalCpu) || $totalCpu <= 0) {
-            return $this->json([
-                'success' => false,
-                'error' => 'totalMemory and totalCpu must be int > 0'
-            ], 400);
-        }
-
+    public function create(
+        #[MapRequestPayload(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)]
+        CreateMachineDto $dto,
+    ): JsonResponse {
         try {
-            $machine = $this->machineManager->createMachine($totalMemory, $totalCpu);
+            $machine = $this->machineManager->createMachine($dto->totalMemory, $dto->totalCpu);
             $this->allocationService->rebalance();
 
             return $this->json([

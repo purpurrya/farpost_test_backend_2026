@@ -2,11 +2,13 @@
 
 namespace App\Controller;
 
+use App\Dto\CreateProcessDto;
 use App\Service\ProcessManager;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/processes', name: 'api_processes_')]
 class ProcessController extends AbstractController
@@ -16,29 +18,12 @@ class ProcessController extends AbstractController
     ) {}
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-
+    public function create(
+        #[MapRequestPayload(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)]
+        CreateProcessDto $dto,
+    ): JsonResponse {
         try {
-            if (!is_array($data)) {
-                return $this->json([
-                    'success' => false,
-                    'error' => 'Invalid request data'
-                ], 400);
-            }
-
-            $requiredMemory = $data['requiredMemory'] ?? null;
-            $requiredCpu = $data['requiredCpu'] ?? null;
-
-            if (!is_int($requiredMemory) || $requiredMemory <= 0 || !is_int($requiredCpu) || $requiredCpu <= 0) {
-                return $this->json([
-                    'success' => false,
-                    'error' => 'requiredMemory and requiredCpu must be int > 0'
-                ], 400);
-            }
-
-            $process = $this->processManager->createProcess($requiredMemory, $requiredCpu);
+            $process = $this->processManager->createProcess($dto->requiredMemory, $dto->requiredCpu);
 
             $machine = $process->getMachine();
 
