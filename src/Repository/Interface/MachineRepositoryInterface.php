@@ -19,6 +19,8 @@ interface MachineRepositoryInterface
      */
     public function findAll(): array;
 
+    public function create(int $totalMemory, int $totalCpu): Machine;
+
     public function save(Machine $machine): void;
 
     public function remove(Machine $machine): void;

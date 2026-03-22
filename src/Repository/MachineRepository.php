@@ -19,6 +19,16 @@ class MachineRepository extends ServiceEntityRepository implements MachineReposi
         parent::__construct($registry, Machine::class);
     }
 
+    public function create(int $totalMemory, int $totalCpu): Machine
+    {
+        $machine = new Machine();
+        $machine->setTotalMemory($totalMemory);
+        $machine->setTotalCpu($totalCpu);
+        $this->save($machine);
+
+        return $machine;
+    }
+
     public function save(Machine $machine): void
     {
         $this->getEntityManager()->persist($machine);

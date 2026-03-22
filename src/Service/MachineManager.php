@@ -18,13 +18,7 @@ class MachineManager
 
     public function createMachine(int $totalMemory, int $totalCpu): Machine
     {
-        $machine = new Machine();
-        $machine->setTotalMemory($totalMemory);
-        $machine->setTotalCpu($totalCpu);
-
-        $this->machineRepository->save($machine);
-
-        return $machine;
+        return $this->machineRepository->create($totalMemory, $totalCpu);
     }
 
     public function deleteMachine(int $machineId): void
