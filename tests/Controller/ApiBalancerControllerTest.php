@@ -5,33 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\ApiDefaults;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ApiBalancerControllerTest extends WebTestCase
 {
-    private function resetDb(): void
-    {
-        $conn = static::getContainer()->get('doctrine')->getConnection();
-        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0');
-        $conn->executeStatement('TRUNCATE TABLE process');
-        $conn->executeStatement('TRUNCATE TABLE machine');
-        $conn->executeStatement('TRUNCATE TABLE messenger_messages');
-        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1');
-    }
-
-    private function requestJson($client, string $method, string $uri, ?array $payload = null): void
-    {
-        $client->request(
-            $method,
-            $uri,
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            $payload !== null ? json_encode($payload, JSON_THROW_ON_ERROR) : null
-        );
-    }
-
-    // система пуста
+    //система пуста    
     public function testStatusEmpty(): void
     {
         $client = static::createClient();
@@ -101,7 +80,7 @@ class ApiBalancerControllerTest extends WebTestCase
         $this->assertSame(1, $un['count'], 'Процесс должен быть в нераспределённых');
     }
 
-    // Процесс садится на машину, если место есть.
+    // процесс, если есть место, размещается
     public function testProcessAllocated(): void
     {
         $client = static::createClient();
@@ -126,7 +105,7 @@ class ApiBalancerControllerTest extends WebTestCase
         $this->assertArrayHasKey('id', $data['process']['machine']);
     }
 
-    // Появилась ещё одна машина — очередь разгребается.
+    // появилась еще машина, очередь разгружается
     public function testRebalanceSecondMachine(): void
     {
         $client = static::createClient();
@@ -253,7 +232,7 @@ class ApiBalancerControllerTest extends WebTestCase
         $this->assertSame(0, $list[0]['processNum']);
     }
 
-    // ссишком жирный процесс никуда не влезает
+    //процесс требует слишком много ресурсов и не может быть размещен
     public function testProcessTooBig(): void
     {
         $client = static::createClient();
@@ -284,5 +263,27 @@ class ApiBalancerControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertFalse($data['success'] ?? true);
         $this->assertArrayHasKey('error', $data);
+    }
+
+    private function resetDb(): void
+    {
+        $conn = static::getContainer()->get('doctrine')->getConnection();
+        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0');
+        $conn->executeStatement('TRUNCATE TABLE process');
+        $conn->executeStatement('TRUNCATE TABLE machine');
+        $conn->executeStatement('TRUNCATE TABLE messenger_messages');
+        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    private function requestJson(KernelBrowser $client, string $method, string $uri, ?array $payload = null): void
+    {
+        $client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $payload !== null ? json_encode($payload, JSON_THROW_ON_ERROR) : null
+        );
     }
 }
