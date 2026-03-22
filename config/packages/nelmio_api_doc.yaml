@@ -36,12 +36,12 @@ nelmio_api_doc:
                             type: integer
                             minimum: 1
                             description: RAM (целое > 0)
-                            example: 8192
+                            example: !php/const App\ApiDefaults::MACHINE_MEMORY
                         totalCpu:
                             type: integer
                             minimum: 1
                             description: CPU (целое > 0)
-                            example: 8
+                            example: !php/const App\ApiDefaults::MACHINE_CPU
                 CreateProcessBody:
                     type: object
                     required: [requiredMemory, requiredCpu]
@@ -49,11 +49,11 @@ nelmio_api_doc:
                         requiredMemory:
                             type: integer
                             minimum: 1
-                            example: 1024
+                            example: !php/const App\ApiDefaults::PROCESS_MEMORY
                         requiredCpu:
                             type: integer
                             minimum: 1
-                            example: 1
+                            example: !php/const App\ApiDefaults::PROCESS_CPU
         paths:
             /api/machines:
                 post:
@@ -67,8 +67,8 @@ nelmio_api_doc:
                                 schema:
                                     $ref: '#/components/schemas/CreateMachineBody'
                                 example:
-                                    totalMemory: 8192
-                                    totalCpu: 8
+                                    totalMemory: !php/const App\ApiDefaults::MACHINE_MEMORY
+                                    totalCpu: !php/const App\ApiDefaults::MACHINE_CPU
                     responses:
                         '201':
                             description: Машина создана
@@ -174,8 +174,8 @@ nelmio_api_doc:
                                 schema:
                                     $ref: '#/components/schemas/CreateProcessBody'
                                 example:
-                                    requiredMemory: 1024
-                                    requiredCpu: 1
+                                    requiredMemory: !php/const App\ApiDefaults::PROCESS_MEMORY
+                                    requiredCpu: !php/const App\ApiDefaults::PROCESS_CPU
                     responses:
                         '201':
                             description: Процесс создан

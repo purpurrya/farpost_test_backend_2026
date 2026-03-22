@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\ApiDefaults;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ApiBalancerControllerTest extends WebTestCase
@@ -56,7 +57,10 @@ class ApiBalancerControllerTest extends WebTestCase
         $client->catchExceptions(false);
         $this->resetDb();
 
-        $payload = ['totalMemory' => 2048, 'totalCpu' => 8];
+        $payload = [
+            'totalMemory' => ApiDefaults::MACHINE_MEMORY,
+            'totalCpu' => ApiDefaults::MACHINE_CPU,
+        ];
         $this->requestJson($client, 'POST', '/api/machines', $payload);
 
         $response = $client->getResponse();
@@ -66,8 +70,8 @@ class ApiBalancerControllerTest extends WebTestCase
         $this->assertTrue($data['success'] ?? false, 'В ответе success = true');
         $this->assertArrayHasKey('machine', $data, 'В ответе должен быть объект machine');
         $this->assertArrayHasKey('id', $data['machine'], 'У машины должен быть id');
-        $this->assertSame(2048, $data['machine']['totalMemory']);
-        $this->assertSame(8, $data['machine']['totalCpu']);
+        $this->assertSame(ApiDefaults::MACHINE_MEMORY, $data['machine']['totalMemory']);
+        $this->assertSame(ApiDefaults::MACHINE_CPU, $data['machine']['totalCpu']);
     }
 
     // нераспределенный процесс (некуда добавить, в очередь)
@@ -77,7 +81,10 @@ class ApiBalancerControllerTest extends WebTestCase
         $client->catchExceptions(false);
         $this->resetDb();
 
-        $payload = ['requiredMemory' => 512, 'requiredCpu' => 2];
+        $payload = [
+            'requiredMemory' => ApiDefaults::PROCESS_MEMORY,
+            'requiredCpu' => ApiDefaults::PROCESS_CPU,
+        ];
         $this->requestJson($client, 'POST', '/api/processes', $payload);
 
         $response = $client->getResponse();
@@ -99,10 +106,16 @@ class ApiBalancerControllerTest extends WebTestCase
         $client->catchExceptions(false);
         $this->resetDb();
 
-        $this->requestJson($client, 'POST', '/api/machines', ['totalMemory' => 2048, 'totalCpu' => 8]);
+        $this->requestJson($client, 'POST', '/api/machines', [
+            'totalMemory' => ApiDefaults::MACHINE_MEMORY,
+            'totalCpu' => ApiDefaults::MACHINE_CPU,
+        ]);
         $this->assertEquals(201, $client->getResponse()->getStatusCode());
 
-        $this->requestJson($client, 'POST', '/api/processes', ['requiredMemory' => 512, 'requiredCpu' => 2]);
+        $this->requestJson($client, 'POST', '/api/processes', [
+            'requiredMemory' => ApiDefaults::PROCESS_MEMORY,
+            'requiredCpu' => ApiDefaults::PROCESS_CPU,
+        ]);
         $response = $client->getResponse();
         $this->assertEquals(201, $response->getStatusCode(), 'Процесс с машиной в наличии — 201');
 
@@ -146,10 +159,16 @@ class ApiBalancerControllerTest extends WebTestCase
         $client->catchExceptions(false);
         $this->resetDb();
 
-        $this->requestJson($client, 'POST', '/api/machines', ['totalMemory' => 2048, 'totalCpu' => 8]);
+        $this->requestJson($client, 'POST', '/api/machines', [
+            'totalMemory' => ApiDefaults::MACHINE_MEMORY,
+            'totalCpu' => ApiDefaults::MACHINE_CPU,
+        ]);
         $this->assertEquals(201, $client->getResponse()->getStatusCode());
 
-        $this->requestJson($client, 'POST', '/api/processes', ['requiredMemory' => 512, 'requiredCpu' => 2]);
+        $this->requestJson($client, 'POST', '/api/processes', [
+            'requiredMemory' => ApiDefaults::PROCESS_MEMORY,
+            'requiredCpu' => ApiDefaults::PROCESS_CPU,
+        ]);
         $this->assertEquals(201, $client->getResponse()->getStatusCode());
         $processId = json_decode($client->getResponse()->getContent(), true)['process']['id'];
 
