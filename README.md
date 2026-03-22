@@ -13,6 +13,8 @@
 
 ### Развёртывание
 
+Скопируйте .env.example в .env и задайте переменные MYSQL_*. Папка vendor в репозитории не хранится: при первом старте контейнера app выполняется composer install (bind-mount ./ перекрывает vendor из образа).
+
 ```bash
 docker compose up -d --build
 ```

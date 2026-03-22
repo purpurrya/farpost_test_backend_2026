@@ -14,6 +14,9 @@ RUN apk add --no-cache \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/app-entrypoint.sh
+RUN chmod +x /usr/local/bin/app-entrypoint.sh
+
 WORKDIR /var/www/html
 
 COPY . .
@@ -24,3 +27,5 @@ RUN git config --global --add safe.directory /var/www/html \
 
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
 
+ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]
+CMD ["php-fpm"]
