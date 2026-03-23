@@ -35,13 +35,6 @@ docker compose exec app php bin/console doctrine:migrations:migrate --no-interac
 
 API: **http://127.0.0.1:8080**
 
-
-```bash
-docker compose down -v
-docker compose up -d --build
-docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
-```
-
 #### Проверка API
 
 - **Swagger (POST и GET):** UI - **http://127.0.0.1:8080/api/doc**, схема - **http://127.0.0.1:8080/api/doc.json**.
