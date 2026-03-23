@@ -4,6 +4,8 @@ nelmio_api_doc:
             title: farpost_test_backend_26 API
             description: |
                 REST API для учёта машин и процессов, распределения по RAM/CPU и ребалансировки
+        servers:
+            - url: http://127.0.0.1:8080
         components:
             schemas:
                 ErrorBody:

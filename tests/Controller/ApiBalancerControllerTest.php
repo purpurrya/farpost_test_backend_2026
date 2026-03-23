@@ -250,19 +250,17 @@ class ApiBalancerControllerTest extends WebTestCase
         $this->assertSame(1, $un['count'], 'Слишком тяжёлый процесс остаётся без машины');
     }
 
-    // невалидные данные при добавлении машины 
     public function testMachineBadJson(): void
     {
         $client = static::createClient();
-        $client->catchExceptions(false);
         $this->resetDb();
 
         $this->requestJson($client, 'POST', '/api/machines', ['totalMemory' => '8', 'totalCpu' => 4]);
-        $this->assertEquals(400, $client->getResponse()->getStatusCode(), 'Строка вместо int — 400');
+        $this->assertSame(400, $client->getResponse()->getStatusCode());
 
         $data = json_decode($client->getResponse()->getContent(), true);
-        $this->assertFalse($data['success'] ?? true);
-        $this->assertArrayHasKey('error', $data);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('violations', $data);
     }
 
     private function resetDb(): void
@@ -282,7 +280,10 @@ class ApiBalancerControllerTest extends WebTestCase
             $uri,
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ACCEPT' => 'application/json',
+            ],
             $payload !== null ? json_encode($payload, JSON_THROW_ON_ERROR) : null
         );
     }

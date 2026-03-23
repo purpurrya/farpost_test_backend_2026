@@ -13,23 +13,45 @@
 
 ### Развёртывание
 
-Скопируйте .env.example в .env и задайте переменные MYSQL_*. Папка vendor в репозитории не хранится: при первом старте контейнера app выполняется composer install (bind-mount ./ перекрывает vendor из образа).
+
+```bash
+cp .env.example .env
+```
+
+Переменные MYSQL_* и DEFAULT_URI в .env.example уже согласованы с Docker, для первого запуска можно ничего не менять, если задаёте свои пароли — сделайте это до создания тома MySQL.
+
+Папка vendor в репозитории не хранится: при первом старте контейнера app выполняется composer install  (bind-mount ./ перекрывает vendor из образа). Подождите пару минут, пока установка завершится.
 
 ```bash
 docker compose up -d --build
+docker compose logs -f app
 ```
 
-API: **http://127.0.0.1:8080** 
-
-Миграции:
+После этого выполните миграции:
 
 ```bash
 docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-**Swagger:** 
-UI — `/api/doc`, 
-JSON — `/api/doc.json`
+API: **http://127.0.0.1:8080**
+
+
+```bash
+docker compose down -v
+docker compose up -d --build
+docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+#### Проверка API
+
+- **Swagger (POST и GET):** UI - **http://127.0.0.1:8080/api/doc**, схема - **http://127.0.0.1:8080/api/doc.json**.
+- **curl:**
+
+```bash
+curl -sS -X POST http://127.0.0.1:8080/api/machines \
+  -H 'Content-Type: application/json' \
+  -d '{"totalMemory":1024,"totalCpu":2}'
+```
 
 Тесты: в **`phpunit.dist.xml`** задан `DATABASE_URL` для окружения с Docker; пароль root должен совпадать с **`MYSQL_ROOT_PASSWORD`** в вашем `.env`.
 

@@ -3,6 +3,7 @@ FROM php:8.3-fpm-alpine
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV DEFAULT_URI=http://127.0.0.1:8080
 
 RUN apk add --no-cache \
     icu-dev \

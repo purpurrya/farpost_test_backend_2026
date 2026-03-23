@@ -6,10 +6,6 @@ services:
       - "3306"
 ###< doctrine/doctrine-bundle ###
 
-  nginx:
-    ports:
-      - "8000:80"
-
 ###> symfony/mailer ###
   mailer:
     image: axllent/mailpit

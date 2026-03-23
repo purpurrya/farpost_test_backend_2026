@@ -6,6 +6,7 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_DEBUG: ${APP_DEBUG:-1}
+      DEFAULT_URI: ${DEFAULT_URI:-http://127.0.0.1:8080}
       DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@database:3306/${MYSQL_DATABASE}?serverVersion=8.0.32&charset=utf8mb4
     volumes:
       - ./:/var/www/html
