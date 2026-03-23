@@ -15,7 +15,7 @@
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
-        <server name="DATABASE_URL" value="mysql://root:!ChangeMeRoot!@database:3306/fartest26?serverVersion=8.0.32&amp;charset=utf8mb4" force="true" />
+        <server name="DATABASE_URL" value="mysql://root:changeme_root@database:3306/fartest26?serverVersion=8.0.32&amp;charset=utf8mb4" force="true" />
     </php>
 
     <testsuites>

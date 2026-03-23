@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\CreateProcessDto;
+use App\Dto\Response\ProcessRequirementsDto;
+use App\Dto\Response\ProcessWithMachineDto;
+use App\Dto\Response\QueueDto;
 use App\Service\ProcessManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,25 +30,14 @@ class ProcessController extends AbstractController
         try {
             $process = $this->processManager->createProcess($dto->requiredMemory, $dto->requiredCpu);
 
-            $machine = $process->getMachine();
-
             return $this->json([
                 'success' => true,
-                'process' => [
-                    'id' => $process->getId(),
-                    'requiredMemory' => $process->getRequiredMemory(),
-                    'requiredCpu' => $process->getRequiredCpu(),
-                    'machine' => $machine ? [
-                        'id' => $machine->getId(),
-                        'totalMemory' => $machine->getTotalMemory(),
-                        'totalCpu' => $machine->getTotalCpu()
-                    ] : null
-                ]
+                'process' => ProcessWithMachineDto::fromEntity($process)->toJson(),
             ], 201);
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -58,12 +50,12 @@ class ProcessController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'message' => "Process {$id} deleted"
+                'message' => "Process {$id} deleted",
             ]);
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 404);
         }
     }
@@ -71,43 +63,23 @@ class ProcessController extends AbstractController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(): JsonResponse
     {
-        $processes = $this->processManager->getAllProcesses();
-
-        $data = [];
-        foreach ($processes as $process) {
-            $machine = $process->getMachine();
-            $data[] = [
-                'id' => $process->getId(),
-                'requiredMemory' => $process->getRequiredMemory(),
-                'requiredCpu' => $process->getRequiredCpu(),
-                'machine' => $machine ? [
-                    'id' => $machine->getId(),
-                    'totalMemory' => $machine->getTotalMemory(),
-                    'totalCpu' => $machine->getTotalCpu()
-                ] : null
-            ];
+        $rows = [];
+        foreach ($this->processManager->getAllProcesses() as $process) {
+            $rows[] = ProcessWithMachineDto::fromEntity($process)->toJson();
         }
 
-        return $this->json($data);
+        return $this->json($rows);
     }
 
     #[Route('/unallocated', name: 'unallocated', methods: ['GET'])]
     public function unallocated(): JsonResponse
     {
         $unallocated = $this->processManager->getUnallocatedProcesses();
+        $dtos = array_map(
+            static fn ($p) => ProcessRequirementsDto::fromEntity($p),
+            $unallocated,
+        );
 
-        $data = [];
-        foreach ($unallocated as $process) {
-            $data[] = [
-                'id' => $process->getId(),
-                'requiredMemory' => $process->getRequiredMemory(),
-                'requiredCpu' => $process->getRequiredCpu()
-            ];
-        }
-
-        return $this->json([
-            'count' => count($data),
-            'processes' => $data
-        ]);
+        return $this->json((new QueueDto(count($dtos), $dtos))->toJson());
     }
 }

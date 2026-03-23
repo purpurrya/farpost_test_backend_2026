@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\CreateMachineDto;
+use App\Dto\Response\MachineDto;
+use App\Dto\Response\MachineSummaryDto;
 use App\Service\AllocationService;
 use App\Service\MachineManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,16 +34,12 @@ class MachineController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'machine' => [
-                    'id' => $machine->getId(),
-                    'totalMemory' => $machine->getTotalMemory(),
-                    'totalCpu' => $machine->getTotalCpu()
-                ]
+                'machine' => MachineSummaryDto::fromEntity($machine)->toJson(),
             ], 201);
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -54,12 +52,12 @@ class MachineController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'message' => "Machine {$id} deleted"
+                'message' => "Machine {$id} deleted",
             ]);
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 404);
         }
     }
@@ -72,29 +70,10 @@ class MachineController extends AbstractController
         if (!$machineData) {
             return $this->json([
                 'success' => false,
-                'error' => "Machine {$id} not found"
+                'error' => "Machine {$id} not found",
             ], 404);
         }
 
-        $processes = [];
-        foreach ($machineData['processes'] as $process) {
-            $processes[] = [
-                'id' => $process->getId(),
-                'requiredMemory' => $process->getRequiredMemory(),
-                'requiredCpu' => $process->getRequiredCpu()
-            ];
-        }
-
-        return $this->json([
-            'id' => $machineData['machine']->getId(),
-            'totalMemory' => $machineData['machine']->getTotalMemory(),
-            'totalCpu' => $machineData['machine']->getTotalCpu(),
-            'processNum' => $machineData['process_num'],
-            'usedMemory' => $machineData['used_memory'],
-            'usedCpu' => $machineData['used_cpu'],
-            'freeMemory' => $machineData['free_memory'],
-            'freeCpu' => $machineData['free_cpu'],
-            'processes' => $processes
-        ]);
+        return $this->json(MachineDto::fromLoadData($machineData)->toJson());
     }
 }
