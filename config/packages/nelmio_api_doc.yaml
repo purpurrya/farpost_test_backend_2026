@@ -6,13 +6,38 @@ nelmio_api_doc:
                 REST API для учёта машин и процессов, распределения по RAM/CPU и ребалансировки
         servers:
             - url: http://127.0.0.1:8080
+            - url: http://localhost:8080
         components:
             schemas:
                 ErrorBody:
                     type: object
+                    required: [success, error]
                     properties:
                         success: { type: boolean, example: false }
-                        error: { type: string, description: сообщение об ошибке }
+                        error: { type: string }
+                ValidationErrorBody:
+                    type: object
+                    properties:
+                        type: { type: string, example: 'https://symfony.com/errors/validation' }
+                        title: { type: string, example: 'Validation Failed' }
+                        status: { type: integer, example: 400 }
+                        detail: { type: string }
+                        violations:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    propertyPath: { type: string }
+                                    title: { type: string }
+                                    template: { type: string }
+                                    parameters: { type: object, additionalProperties: true }
+                ProblemDetail:
+                    type: object
+                    properties:
+                        type: { type: string }
+                        title: { type: string }
+                        status: { type: integer }
+                        detail: { type: string }
                 MachineSummary:
                     type: object
                     properties:
@@ -83,11 +108,14 @@ nelmio_api_doc:
                                             machine:
                                                 $ref: '#/components/schemas/MachineSummary'
                         '400':
-                            description: Невалидное тело или ошибка
+                            description: Ошибка валидации или десериализации тела (Symfony, RFC 7807) либо ответ контроллера success/error
                             content:
                                 application/json:
                                     schema:
-                                        $ref: '#/components/schemas/ErrorBody'
+                                        oneOf:
+                                            - $ref: '#/components/schemas/ValidationErrorBody'
+                                            - $ref: '#/components/schemas/ProblemDetail'
+                                            - $ref: '#/components/schemas/ErrorBody'
             /api/machines/{id}:
                 get:
                     summary: Машина с ее нагрузкой и процессами
@@ -190,11 +218,14 @@ nelmio_api_doc:
                                             process:
                                                 $ref: '#/components/schemas/ProcessWithPlacement'
                         '400':
-                            description: Невалидное тело или ошибка
+                            description: Ошибка валидации или десериализации тела (Symfony, RFC 7807) либо ответ контроллера success/error
                             content:
                                 application/json:
                                     schema:
-                                        $ref: '#/components/schemas/ErrorBody'
+                                        oneOf:
+                                            - $ref: '#/components/schemas/ValidationErrorBody'
+                                            - $ref: '#/components/schemas/ProblemDetail'
+                                            - $ref: '#/components/schemas/ErrorBody'
             /api/processes/unallocated:
                 get:
                     summary: Нераспределенные процессы
